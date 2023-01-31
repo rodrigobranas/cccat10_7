@@ -1,0 +1,34 @@
+code smells
+
+1 - nomes
+
+* renomear
+
+2 - linhas em branco
+
+* apagar
+
+3 - comentários
+
+* apagar
+
+4 - condições confusas ou complexas
+
+* introduzir cláusulas guarda
+* consolidar condições
+
+5 - tratamento inadequado de erros
+
+* tratar adequadamente
+
+6 - variáveis declaradas longe da utilização
+
+* mover variáveis
+
+7 - variável declarada em conjunto
+
+* separar variáveis
+
+8 - variável inicializada em conjunto
+
+* separar variáveis
