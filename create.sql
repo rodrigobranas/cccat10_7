@@ -1,3 +1,5 @@
+drop table cccat10.item;
+drop table cccat10.order;
 drop table cccat10.coupon;
 drop table cccat10.product;
 drop schema cccat10;
@@ -28,3 +30,18 @@ create table cccat10.coupon (
 
 insert into cccat10.coupon (code, percentage, expire_date) values ('VALE20', 20, '2023-10-01T10:00:00');
 insert into cccat10.coupon (code, percentage, expire_date) values ('VALE10', 10, '2022-10-01T10:00:00');
+
+create table cccat10.order (
+	id_order text,
+	cpf text,
+	code text,
+	total numeric,
+	freight numeric
+);
+
+create table cccat10.item (
+	id_order text,
+	id_product integer,
+	price numeric,
+	quantity integer
+);

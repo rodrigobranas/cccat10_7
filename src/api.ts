@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import Checkout from "./Checkout";
+import Checkout from "./application/usecase/Checkout";
 const app = express();
 app.use(express.json());
 

@@ -1,15 +1,21 @@
-import Checkout from "../src/Checkout";
+import Checkout from "../src/application/usecase/Checkout";
 import sinon from "sinon";
 import CurrencyGatewayHttp from "../src/CurrencyGatewayHttp";
 import ProductRepositoryDatabase from "../src/ProductRepositoryDatabase";
 import CouponRepositoryDatabase from "../src/CouponRepositoryDatabase";
 import CurrencyGateway from "../src/CurrencyGateway";
 import ProductRepository from "../src/ProductRepository";
+import crypto from "crypto";
+import GetOrder from "../src/application/usecase/GetOrder";
+import OrderRepositoryDatabase from "../src/OrderRepositoryDatabase";
+import Product from "../src/domain/entity/Product";
 
 let checkout: Checkout;
+let getOrder: GetOrder;
 
 beforeEach(function () {
 	checkout = new Checkout();
+	getOrder = new GetOrder();
 });
 
 test("Não deve aceitar um pedido com cpf inválido", async function () {
@@ -30,7 +36,9 @@ test("Deve criar um pedido vazio", async function () {
 });
 
 test("Deve criar um pedido com 3 produtos", async function () {
+	const uuid = crypto.randomUUID();
 	const input = {
+		uuid,
 		cpf: "407.302.170-27",
 		items: [
 			{ idProduct: 1, quantity: 1 },
@@ -38,7 +46,8 @@ test("Deve criar um pedido com 3 produtos", async function () {
 			{ idProduct: 3, quantity: 3 }
 		]
 	};
-	const output = await checkout.execute(input);
+	await checkout.execute(input);
+	const output = await getOrder.execute(uuid);
 	expect(output.total).toBe(6090);
 });
 
@@ -134,7 +143,7 @@ test("Deve criar um pedido com 1 produto em dólar usando um stub", async functi
 		usd: 3
 	});
 	const stubProductRepository = sinon.stub(ProductRepositoryDatabase.prototype, "getProduct").resolves(
-		{ idProduct: 5, description: "A", price: 1000, width: 10, height: 10, length: 10, weight: 10, currency: "USD" }
+		new Product(5, "A", 1000, 10, 10, 10, 10, "USD")
 	)
 	const input = {
 		cpf: "407.302.170-27",
@@ -196,7 +205,7 @@ test("Deve criar um pedido com 1 produto em dólar usando um fake", async functi
 	}
 	const productRepository: ProductRepository = {
 		async getProduct (idProduct: number): Promise<any> {
-			return { idProduct: 6, description: "A", price: 1000, width: 10, height: 10, length: 10, weight: 10, currency: "USD" };
+			return new Product(6, "A", 1000, 10, 10, 10, 10, "USD");
 		}
 	}
 	checkout = new Checkout(currencyGateway, productRepository);
@@ -208,4 +217,22 @@ test("Deve criar um pedido com 1 produto em dólar usando um fake", async functi
 	};
 	const output = await checkout.execute(input);
 	expect(output.total).toBe(3000);
+});
+
+test("Deve criar um pedido e verificar o código de série", async function () {
+	const stub = sinon.stub(OrderRepositoryDatabase.prototype, "count").resolves(1);
+	const uuid = crypto.randomUUID();
+	const input = {
+		uuid,
+		cpf: "407.302.170-27",
+		items: [
+			{ idProduct: 1, quantity: 1 },
+			{ idProduct: 2, quantity: 1 },
+			{ idProduct: 3, quantity: 3 }
+		]
+	};
+	await checkout.execute(input);
+	const output = await getOrder.execute(uuid);
+	expect(output.code).toBe("202300000001");
+	stub.restore();
 });
