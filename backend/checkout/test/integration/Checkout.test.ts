@@ -14,6 +14,7 @@ import Connection from "../../src/infra/database/Connection";
 import CouponRepository from "../../src/application/repository/CouponRepository";
 import OrderRepository from "../../src/application/repository/OrderRepository";
 import AxiosAdapter from "../../src/infra/http/AxiosAdapter";
+import CatalogGatewayHttp from "../../src/infra/gateway/CatalogGatewayHttp";
 
 let checkout: Checkout;
 let getOrder: GetOrder;
@@ -177,7 +178,6 @@ test("Deve criar um pedido com 1 produto em dólar usando um stub", async functi
 });
 
 test("Deve criar um pedido com 3 produtos com cupom de desconto com spy", async function () {
-	const spyProductRepository = sinon.spy(ProductRepositoryDatabase.prototype, "getProduct");
 	const spyCouponRepository = sinon.spy(CouponRepositoryDatabase.prototype, "getCoupon");
 	const input = {
 		cpf: "407.302.170-27",
@@ -192,9 +192,7 @@ test("Deve criar um pedido com 3 produtos com cupom de desconto com spy", async 
 	expect(output.total).toBe(4872);
 	expect(spyCouponRepository.calledOnce).toBeTruthy();
 	expect(spyCouponRepository.calledWith("VALE20")).toBeTruthy();
-	expect(spyProductRepository.calledThrice).toBeTruthy();
 	spyCouponRepository.restore();
-	spyProductRepository.restore();
 });
 
 test("Deve criar um pedido com 1 produto em dólar usando um mock", async function () {
@@ -230,6 +228,7 @@ test("Deve criar um pedido com 1 produto em dólar usando um fake", async functi
 			return [];
 		}
 	}
+	const catalogGatewayStub = sinon.stub(CatalogGatewayHttp.prototype, "getProduct").resolves(new Product(6, "A", 1000, 10, 10, 10, 10, "USD"));
 	checkout = new Checkout(currencyGateway, productRepository, couponRepository, orderRepository);
 	const input = {
 		cpf: "407.302.170-27",
@@ -239,6 +238,7 @@ test("Deve criar um pedido com 1 produto em dólar usando um fake", async functi
 	};
 	const output = await checkout.execute(input);
 	expect(output.total).toBe(3000);
+	catalogGatewayStub.restore();
 });
 
 test("Deve criar um pedido e verificar o código de série", async function () {
