@@ -9,8 +9,9 @@ import FreightGatewayHttp from "../../infra/gateway/FreightGatewayHttp";
 import AxiosAdapter from "../../infra/http/AxiosAdapter";
 import CatalogGateway from "../gateway/CatalogGateway";
 import CatalogGatewayHttp from "../../infra/gateway/CatalogGatewayHttp";
+import Usecase from "./Usecase";
 
-export default class Checkout {
+export default class Checkout implements Usecase {
 
 	constructor (
 		readonly currencyGateway: CurrencyGateway,
@@ -28,7 +29,7 @@ export default class Checkout {
 		currencyTable.addCurrency("USD", currencies.usd);
 		const sequence = await this.orderRepository.count();
 		const order = new Order(input.uuid, input.cpf, currencyTable, sequence, new Date());
-		const freightInput: FreightInput = { items: [] };
+		const freightInput: FreightInput = { items: [], from: input.from, to: input.to };
 		if (input.items) {
 			for (const item of input.items) {
 				// const product = await this.productRepository.getProduct(item.idProduct);

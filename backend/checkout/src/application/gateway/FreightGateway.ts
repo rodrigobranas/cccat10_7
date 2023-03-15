@@ -9,7 +9,9 @@ export type Input = {
 		length: number,
 		weight: number,
 		quantity: number
-	}[]
+	}[],
+	from?: string,
+	to?: string
 }
 
 type Output = {
