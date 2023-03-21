@@ -10,6 +10,10 @@ import AxiosAdapter from "../../infra/http/AxiosAdapter";
 import CatalogGateway from "../gateway/CatalogGateway";
 import CatalogGatewayHttp from "../../infra/gateway/CatalogGatewayHttp";
 import Usecase from "./Usecase";
+import CurrencyGatewayHttp from "../../infra/gateway/CurrencyGatewayHttp";
+import StockGateway from "../gateway/StockGateway";
+import StockGatewayHttp from "../../infra/gateway/StockGatewayHttp";
+import Queue from "../../infra/queue/Queue";
 
 export default class Checkout implements Usecase {
 
@@ -19,7 +23,9 @@ export default class Checkout implements Usecase {
 		readonly couponRepository: CouponRepository,
 		readonly orderRepository: OrderRepository,
 		readonly freightGateway: FreightGateway = new FreightGatewayHttp(new AxiosAdapter()),
-		readonly catalogGateway: CatalogGateway = new CatalogGatewayHttp(new AxiosAdapter())
+		readonly catalogGateway: CatalogGateway = new CatalogGatewayHttp(new AxiosAdapter()),
+		readonly stockGateway: StockGateway = new StockGatewayHttp(new AxiosAdapter()),
+		readonly queue?: Queue
 	) {
 	}
 
@@ -32,7 +38,6 @@ export default class Checkout implements Usecase {
 		const freightInput: FreightInput = { items: [], from: input.from, to: input.to };
 		if (input.items) {
 			for (const item of input.items) {
-				// const product = await this.productRepository.getProduct(item.idProduct);
 				const product = await this.catalogGateway.getProduct(item.idProduct);
 				order.addItem(product, item.quantity);
 				freightInput.items.push({ width: product.width, height: product.height, length: product.length, weight: product.weight, quantity: item.quantity });
@@ -49,6 +54,9 @@ export default class Checkout implements Usecase {
 		}
 		let total = order.getTotal();
 		await this.orderRepository.save(order);
+		if (this.queue) {
+			await this.queue.publish("orderPlaced", input);
+		}
 		return {
 			total,
 			freight
